@@ -15,8 +15,21 @@ const contractReadFunc = async () => {
 }
 
 const contractUpdateFunc = async () => {
-  const { addr: senderAddress } = algosdk.mnemonicToSecretKey(mnemonic);
-  
+  const { sk: senderPvtKey, addr: senderAddress } = algosdk.mnemonicToSecretKey(mnemonic);
+  const params = await algodClient.getTransactionParams().do();
+  // call application with arguments
+  let args = []
+  args.push(new Uint8Array(Buffer.from("Add")))
+  console.log(Array.isArray(args));
+  // create unsigned transaction
+  let txn = algosdk.makeApplicationNoOpTxn(senderAddress, params, 57209087, args);
+  let txId = txn.txID().toString();
+  // Sign the transaction
+  let signedTxn = txn.signTxn(senderPvtKey);
+  console.log("Signed transaction with txID: %s", txId);
+  // Submit the transaction
+  let sendTx = await algodClient.sendRawTransaction(signedTxn).do();
+  console.log(sendTx);
 }
 
 const deployContract = async () => {
@@ -67,7 +80,7 @@ async function readGlobalState(client, account, index) {
   let accountInfoResponse = await client.accountInformation(account).do();
   for (let i = 0; i < accountInfoResponse['created-apps'].length; i++) {
     if (accountInfoResponse['created-apps'][i].id == index) {
-      console.log(accountInfoResponse['created-apps'][i])
+      // console.log(accountInfoResponse['created-apps'][i])
       console.log("Application's global state:");
       for (let n = 0; n < accountInfoResponse['created-apps'][i]['params']['global-state'].length; n++) {
         console.log(accountInfoResponse['created-apps'][i]['params']['global-state'][n]);
