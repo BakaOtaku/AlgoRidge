@@ -177,8 +177,8 @@ async function contractInteract() {
 }
 
 // transfer()
-contractInteract()
-// createAccount()
+// contractInteract()
+createAccount()
 
 
 

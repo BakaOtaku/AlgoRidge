@@ -11,7 +11,7 @@ const algodClient = new algosdk.Algodv2(token, baseServer, port);
 
 const contractReadFunc = async () => {
   const { addr: senderAddress } = algosdk.mnemonicToSecretKey(mnemonic);
-  readGlobalState(algodClient, senderAddress, 57209087);
+  readGlobalState(algodClient, senderAddress, 57287538);
 }
 
 const contractUpdateFunc = async () => {
@@ -67,7 +67,7 @@ async function readGlobalState(client, account, index) {
   let accountInfoResponse = await client.accountInformation(account).do();
   for (let i = 0; i < accountInfoResponse['created-apps'].length; i++) {
     if (accountInfoResponse['created-apps'][i].id == index) {
-      console.log(accountInfoResponse['created-apps'][i])
+      // console.log(accountInfoResponse['created-apps'][i])
       console.log("Application's global state:");
       for (let n = 0; n < accountInfoResponse['created-apps'][i]['params']['global-state'].length; n++) {
         console.log(accountInfoResponse['created-apps'][i]['params']['global-state'][n]);
@@ -77,6 +77,6 @@ async function readGlobalState(client, account, index) {
 }
 
 
-// deployContract()
-contractReadFunc()
-contractUpdateFunc()
+deployContract()
+// contractReadFunc()
+// contractUpdateFunc()
