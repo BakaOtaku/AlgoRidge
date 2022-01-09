@@ -66,7 +66,7 @@ assert
 txna ApplicationArgs 1
 btoi
 txna Accounts 1
-callsub sub4
+callsub sub2
 int 1
 return
 main_l14:
@@ -77,18 +77,18 @@ assert
 txna ApplicationArgs 1
 txn Sender
 txna ApplicationArgs 2
-callsub sub8
+callsub sub5
 return
 main_l15:
 txn Sender
 txna ApplicationArgs 1
-callsub sub7
+callsub sub4
 return
 main_l16:
 int 0
 byte "assetID"
 app_global_get
-callsub sub6
+callsub sub3
 return
 main_l17:
 txn Sender
@@ -114,200 +114,108 @@ main_l21:
 int 0
 return
 main_l22:
-txna Accounts 1
-byte "bot"
-int 1
-app_local_put
-txn Sender
-byte "admin"
-int 1
-app_local_put
-int 0
-int 1
-callsub sub0
-callsub sub5
-&&
-int 1
-==
-bnz main_l24
-int 0
-return
-main_l24:
 int 1
 return
-sub0: // is_valid_setup_call
-store 1
-store 0
-load 0
-gtxns TypeEnum
-int pay
-==
-assert
-load 0
-gtxns Amount
-int 400000
->=
-assert
-load 1
-gtxns TypeEnum
-int appl
-==
-assert
-load 1
-gtxns OnCompletion
-int NoOp
-==
-assert
-load 1
-gtxns ApplicationID
-int 0
-!=
-assert
-load 1
-gtxns NumAppArgs
-int 8
-==
-assert
-int 1
-retsub
-sub1: // getAssetId
+sub0: // getAssetId
 byte "assetID"
 app_global_get
 retsub
-sub2: // inner_asset_creation
-store 4
-itxn_begin
-int acfg
-itxn_field TypeEnum
-global CurrentApplicationAddress
-itxn_field ConfigAssetClawback
-global CurrentApplicationAddress
-itxn_field ConfigAssetReserve
-int 1
-itxn_field ConfigAssetDefaultFrozen
-load 4
-gtxnsa ApplicationArgs 0
-itxn_field ConfigAssetMetadataHash
-load 4
-gtxnsa ApplicationArgs 1
-itxn_field ConfigAssetName
-byte "bridge-lp"
-itxn_field ConfigAssetUnitName
-load 4
-gtxnsa ApplicationArgs 3
-btoi
-itxn_field ConfigAssetTotal
-load 4
-gtxnsa ApplicationArgs 4
-btoi
-itxn_field ConfigAssetDecimals
-itxn_submit
-itxn CreatedAssetID
-retsub
-sub3: // inner_asset_transfer
-store 10
-store 9
-store 8
+sub1: // inner_asset_transfer
 store 7
+store 6
+store 5
+store 4
 itxn_begin
 int axfer
 itxn_field TypeEnum
-load 7
+load 4
 itxn_field XferAsset
-load 9
+load 6
 itxn_field AssetSender
-load 8
+load 5
 itxn_field AssetAmount
-load 10
+load 7
 itxn_field AssetReceiver
 itxn_submit
 retsub
-sub4: // inner_payment_txn
-store 3
-store 2
+sub2: // inner_payment_txn
+store 1
+store 0
 itxn_begin
 int pay
 itxn_field TypeEnum
 global CurrentApplicationAddress
 itxn_field Sender
-load 2
+load 0
 itxn_field Amount
-load 3
+load 1
 itxn_field Receiver
 itxn_submit
 retsub
-sub5: // setup_application
-byte "assetID"
-int 1
-callsub sub2
-app_global_put
-int 1
-retsub
-sub6: // lp_deposit_in_pool
-store 6
-store 5
-load 5
+sub3: // lp_deposit_in_pool
+store 3
+store 2
+load 2
 gtxns Amount
 int 0
 >
-bz sub6_l2
-load 6
-load 5
+bz sub3_l2
+load 3
+load 2
 gtxns Amount
 global CurrentApplicationAddress
-load 5
+load 2
 gtxns Sender
-callsub sub3
-sub6_l2:
+callsub sub1
+sub3_l2:
 int 1
 retsub
-sub7: // remove_lp_from_pool
-store 12
-store 11
-load 11
-callsub sub1
+sub4: // remove_lp_from_pool
+store 9
+store 8
+load 8
+callsub sub0
 asset_holding_get AssetBalance
-store 13
-store 14
-load 13
-load 14
-load 12
+store 10
+store 11
+load 10
+load 11
+load 9
 >
 &&
-bnz sub7_l2
+bnz sub4_l2
 int 0
-b sub7_l3
-sub7_l2:
-callsub sub1
-load 12
-load 11
+b sub4_l3
+sub4_l2:
+callsub sub0
+load 9
+load 8
 global CurrentApplicationAddress
-callsub sub3
-load 12
-load 11
-callsub sub4
+callsub sub1
+load 9
+load 8
+callsub sub2
 int 1
-sub7_l3:
+sub4_l3:
 retsub
-sub8: // use_transfer_bridge
-store 17
-store 16
-store 15
-load 16
+sub5: // use_transfer_bridge
+store 14
+store 13
+store 12
+load 13
 byte "bridgedeposit"
-load 15
+load 12
 app_local_put
-load 16
+load 13
 byte "latesttimestamp"
 global LatestTimestamp
 app_local_put
-load 16
+load 13
 byte "bridgereciever"
-load 17
+load 14
 app_local_put
 int 1
-retsub
-`
+retsub`
 
 const clearSource = `
 #pragma version 5
