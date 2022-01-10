@@ -22,6 +22,7 @@ def approval_program():
    add = Seq([
        scratchCount.store(App.globalGet(Bytes("Count"))),
        App.globalPut(Bytes("Count"), scratchCount.load() + Int(1)),
+       Log(Bytes("fuzious")),
        Return(Int(1))
    ])
 
