@@ -98,7 +98,7 @@ const useBridge = async () => {
   //   console.log(err);
   // }
 }
-useBridge()
+// useBridge()
 
 const deployContract = async () => {
   // get account from mnemonic
@@ -158,7 +158,7 @@ async function readGlobalState(client, account, index) {
 }
 
 
-// deployContract()
+deployContract()
 // contractReadFunc()
 // contractUpdateFunc()
 
