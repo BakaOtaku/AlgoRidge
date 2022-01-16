@@ -27,15 +27,7 @@ def is_valid_setup_call(fund_txn_index: TealType.uint64, app_call_txn_index: Tea
     """
     return Seq(
         # first transaction is seeding the application account
-        Assert(Gtxn[fund_txn_index].type_enum() == TxnType.Payment),
-        # you can calculate the min balance you need here ... I just sent 400k to have enough for playing around
-        Assert(Gtxn[fund_txn_index].amount() >= Int(400000)),
-        Assert(Gtxn[app_call_txn_index].type_enum() == TxnType.ApplicationCall),
-        Assert(Gtxn[app_call_txn_index].on_completion() == OnComplete.NoOp),
-        # if the application is yet to be created the application ID will be 0
-        Assert(Gtxn[app_call_txn_index].application_id() != Int(0)),
         # the correct amount of application_args are specified since the call whould later fail elsewhise anyways
-        Assert(Gtxn[app_call_txn_index].application_args.length() == Int(8)),
         Int(1))
 
 
@@ -56,14 +48,13 @@ def inner_asset_creation(txn_index: TealType.uint64) -> Seq:
     return Seq([
         InnerTxnBuilder.Begin(),
         InnerTxnBuilder.SetFields({
-            # TxnField.note: Bytes("TUT_ITXN_AC"),
             TxnField.type_enum: TxnType.AssetConfig,
             TxnField.config_asset_clawback: Global.current_application_address(),
             TxnField.config_asset_reserve: Global.current_application_address(),
             TxnField.config_asset_default_frozen: Int(1),
             TxnField.config_asset_metadata_hash: call_parameters[0],
-            TxnField.config_asset_name: call_parameters[1],
-            TxnField.config_asset_unit_name: Bytes("bridge-lp"),
+            TxnField.config_asset_name: Bytes("bridge-lp"),
+            TxnField.config_asset_unit_name: Bytes("bridge-lp-asset"),
             TxnField.config_asset_total: asset_total,
             TxnField.config_asset_decimals: decimals,
         }),
@@ -108,32 +99,26 @@ def inner_payment_txn(amount: TealType.uint64, receiver: TealType.bytes) -> Expr
 def setup_application():
     """ perform application setup to initiate global state and create the managed ASA"""
     asset_id = inner_asset_creation(Int(1))
-    fixed_license_price = Btoi(Gtxn[1].application_args[6])
-    refund_period = Btoi(Gtxn[1].application_args[7])
     return Seq(
-        # initiate Global State
-        App.globalPut(GlobalState.Variables.ASSET_ID, asset_id),
-        Int(1))
+        [
+            App.globalPut(GlobalState.Variables.ASSET_ID, asset_id),
+            Int(1),
+    ])
 
 
 @Subroutine(TealType.uint64)
 def lp_deposit_in_pool(payment_txn_index: TealType.uint64, asset_id: TealType.uint64):
     """ perform the operation to buy licenses """
-    # first transaction in thr group should be the buy payment
     deposit_tx = Gtxn[payment_txn_index]
     deposit_amount_sent = deposit_tx.amount()
 
     return Seq(
-        #  check if the payment is enough to buy even 1 unit
-        If(deposit_amount_sent > Int(0)).Then(
-            # if so transfer the bought units
-            inner_asset_transfer(
-                asset_id,
-                deposit_amount_sent,
-                Global.current_application_address(),
-                deposit_tx.sender())
-        ),
-        # update local state
+        inner_asset_transfer(
+            asset_id,
+            deposit_amount_sent,
+            Global.current_application_address(),
+            deposit_tx.sender()),
+
         Return(Int(1)))
 
 
@@ -165,12 +150,14 @@ def use_transfer_bridge(amount: TealType.uint64, sender: TealType.bytes, recieve
         App.localPut(sender, LocalState.Variables.DEPOSITED, amount),
         App.localPut(sender, LocalState.Variables.TimeStamp, Global.latest_timestamp()),
         App.localPut(sender, LocalState.Variables.RECIEVER, reciever),
+        Log(reciever),
+        Log(Itob(amount)),
         Int(1)
     )
 
 
 def approval_program():
-    handle_optin = Return(Int(0))
+    handle_optin = Return(Int(1))
 
     handle_closeout = Return(Int(0))
 
@@ -179,48 +166,40 @@ def approval_program():
     handle_deleteapp = Return(Int(0))
 
     setup_stuff = Seq([
-        App.localPut(Txn.accounts[1], Bytes("bot"), Int(1)),
-        App.localPut(Txn.sender(), Bytes("admin"), Int(1)),
-        If(And(is_valid_setup_call(Int(0), Int(1)), setup_application()) == Int(1)).Then(
-            Approve()).Else(Reject())
+        App.globalPut(Bytes("bot"), Txn.sender()),
+        App.globalPut(Bytes("admin"), Txn.sender()),
+        setup_application(),
+
     ])
 
-    setup_dev= Seq(
-        [
-
-        ]
-    )
-
-    is_admin = App.localGet(Txn.sender(), Bytes("admin"))
-    is_bot = App.localGet(Txn.sender(), Bytes("bot"))
+    is_admin = App.globalGet(Bytes("admin"))
+    is_bot = App.globalGet(Bytes("bot"))
 
     new_bot = Txn.accounts[1]
+
     change_bot = Seq(
         [
-            Assert(is_admin),
-            App.localPut(new_bot, Bytes("bot"), Int(1)),
+            Assert(Txn.sender()==is_admin),
+            App.globalPut(Bytes("bot"), new_bot),
             Return(Int(1))
         ]
     )
 
-    deposit_lp_in_pool = lp_deposit_in_pool(Int(0), App.globalGet(GlobalState.Variables.ASSET_ID))
+    deposit_lp_in_pool = lp_deposit_in_pool(Int(1), App.globalGet(GlobalState.Variables.ASSET_ID))
 
     withdraw_lp_from_pool = remove_lp_from_pool(Txn.sender(), Txn.application_args[1])
 
-    # send micro algo here to do stuff
     transfer_bridge = Seq(
         [
-            Assert(Txn.application_args.length() == Int(2)),
-            use_transfer_bridge(Txn.application_args[1], Txn.sender(), Txn.application_args[2]),
-            # Int(1)
-        ]
+            use_transfer_bridge(Gtxn[1].amount(), Txn.sender(), Gtxn[0].application_args[1]),
+         ]
     )
 
     release_amount = Btoi(Txn.application_args[1])
     release_address = Txn.accounts[1]
     release_payment = Seq(
         [
-            Assert(is_bot),
+            Assert(is_bot==Txn.sender()),
             Assert(Le(release_amount, Balance(Global.current_application_address()))),
             inner_payment_txn(release_amount, release_address),
             Return(Int(1))
@@ -228,22 +207,18 @@ def approval_program():
     )
 
     handle_noop = Cond(
-        # [And(
-        #     BytesEq(Txn.application_args[0], Bytes("setup"))
-        # ), setup_dev],
         [And(
-            Global.group_size() == Int(1),
             Txn.application_args[0] == Bytes("AddBot")
         ), change_bot],
         [And(
-            BytesEq(Txn.application_args[0], Bytes("addliquidity"))
+            BytesEq(Gtxn[0].application_args[0], Bytes("addliquidity"))
         ), Return(deposit_lp_in_pool)],
         [And(
             BytesEq(Txn.application_args[0], Bytes("removeliquidity"))
         ), Return(withdraw_lp_from_pool)],
         [
             And(
-                BytesEq(Txn.application_args[0],Bytes("useBridge"))
+                BytesEq(Gtxn[0].application_args[0],Bytes("useBridge"))
             ),Return(transfer_bridge)
         ],
         [
@@ -254,7 +229,7 @@ def approval_program():
         [
             And(
                 BytesEq(Txn.application_args[0], Bytes("setupdev"))
-            ), setup_stuff
+            ), Return(setup_stuff)
         ],
     )
 
@@ -265,12 +240,6 @@ def approval_program():
         [Txn.on_completion() == OnComplete.UpdateApplication, handle_updateapp],
         [Txn.on_completion() == OnComplete.DeleteApplication, handle_deleteapp],
         [Txn.on_completion() == OnComplete.NoOp, handle_noop]
-        # [Txn.application_args[0] == Bytes("setup"), Return(setup_stuff)],
-        # # [Txn.application_args[0] == Bytes("AddBot"), change_bot],
-        # [Txn.application_args[0] == Bytes("addliquidity"), Return(deposit_lp_in_pool)],
-        # [Txn.application_args[0] == Bytes("removeliquidity"),Return(withdraw_lp_from_pool)],
-        # [Txn.application_args[0] == Bytes("useBridge"), Return(transfer_bridge)],
-        # [Txn.application_args[0] == Bytes("releasePayment"), release_payment]
     )
     # Mode.Application specifies that this is a smart contract
     return compileTeal(program, Mode.Application, version=5)
