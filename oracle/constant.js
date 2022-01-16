@@ -1,4 +1,5 @@
 const mnemonic = "stuff wasp toddler cave sunny key regret fatigue anger warm health false pluck gadget fiction member benefit because top alert trim tomorrow ordinary able bonus"
+
 const approvalSource = `
 #pragma version 5
 txn ApplicationID
@@ -271,8 +272,8 @@ const abi = `
 `
 
 module.exports = {
-  mnemonic,
-  approvalSource,
-  clearSource,
-  abi
+	mnemonic,
+	approvalSource,
+	clearSource,
+	abi
 };
