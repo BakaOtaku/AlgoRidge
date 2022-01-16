@@ -18,25 +18,18 @@ Three main architectures are:
 
 ### Tech Stack
 
+Smart Contracts
+- Python
+- Solidity
 
-<summary>Smart Contracts</summary>
-<ul>
-	  <li>Python</li>
-	  <li>Solidity</li>
-</ul>
+Frontend
+- React.js
+- RandLabs MyAlgo
+- Web3
 
-<summary>Frontend</summary>
-<ul>
-	  <li>React.js</li>
-		<li>MyAlgo</li>
-		<li>Web3</li>
-</ul>
-
-<summary>Backend (Oracle Bot)</summary>
-<ul>
-	  <li>Express</li>
-		<li>AlgoSDK</li>
-</ul>
+Backend (Oracle Bot)
+- Express
+- AlgoSDK
 
 ### How to set up?
 
@@ -55,7 +48,7 @@ Setting up oracle
 # git clone
 cd oracle
 npm i
-node app.js
+node oracle.js
 ```
 
 ### Team
