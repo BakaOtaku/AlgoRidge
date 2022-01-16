@@ -1,4 +1,4 @@
-const mnemonic = "humor fade fiber interest pluck subway tumble ancient flame curtain favorite rib desert argue umbrella hero limit ginger green despair lunar hospital rather about property"
+const mnemonic = "stuff wasp toddler cave sunny key regret fatigue anger warm health false pluck gadget fiction member benefit because top alert trim tomorrow ordinary able bonus"
 const approvalSource = `
 #pragma version 5
 txn ApplicationID
@@ -59,7 +59,7 @@ app_global_put
 byte "admin"
 txn Sender
 app_global_put
-callsub sub3
+int 1
 return
 main_l15:
 byte "bot"
@@ -80,25 +80,21 @@ callsub sub2
 int 1
 return
 main_l16:
-txn NumAppArgs
-int 2
-==
-assert
 gtxn 1 Amount
 txn Sender
 gtxna 0 ApplicationArgs 1
-callsub sub6
+callsub sub5
 return
 main_l17:
 txn Sender
 txna ApplicationArgs 1
-callsub sub5
+callsub sub4
 return
 main_l18:
 int 1
 byte "assetID"
 app_global_get
-callsub sub4
+callsub sub3
 return
 main_l19:
 byte "thisishere"
@@ -159,10 +155,7 @@ load 1
 itxn_field Receiver
 itxn_submit
 retsub
-sub3: // setup_application
-int 1
-retsub
-sub4: // lp_deposit_in_pool
+sub3: // lp_deposit_in_pool
 store 3
 store 2
 load 3
@@ -174,7 +167,7 @@ gtxns Sender
 callsub sub1
 int 1
 retsub
-sub5: // remove_lp_from_pool
+sub4: // remove_lp_from_pool
 store 9
 store 8
 load 8
@@ -187,10 +180,10 @@ load 11
 load 9
 >
 &&
-bnz sub5_l2
+bnz sub4_l2
 int 0
-b sub5_l3
-sub5_l2:
+b sub4_l3
+sub4_l2:
 callsub sub0
 load 9
 load 8
@@ -200,24 +193,12 @@ load 9
 load 8
 callsub sub2
 int 1
-sub5_l3:
+sub4_l3:
 retsub
-sub6: // use_transfer_bridge
+sub5: // use_transfer_bridge
 store 14
 store 13
 store 12
-load 13
-byte "bridgedeposit"
-load 12
-app_local_put
-load 13
-byte "latesttimestamp"
-global LatestTimestamp
-app_local_put
-load 13
-byte "bridgereciever"
-load 14
-app_local_put
 load 14
 log
 load 12
